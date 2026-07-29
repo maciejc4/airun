@@ -1,33 +1,58 @@
-HELP.md
-target/
-.mvn/wrapper/maven-wrapper.jar
-!**/src/main/**/target/
-!**/src/test/**/target/
+# Maven and Java build output
+/target/
+*.class
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# Runtime output and JVM crash reports
+*.log
+hs_err_pid*
+replay_pid*
 
-### IntelliJ IDEA ###
-.idea
+# Local environment and secret-bearing configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+/src/main/resources/application-local.properties
+/src/main/resources/application-local.yml
+/src/main/resources/application-local.yaml
+/src/main/resources/application-secrets.properties
+/src/main/resources/application-secrets.yml
+/src/main/resources/application-secrets.yaml
+
+# Raw and decoded production training data is personal data.
+# Test fixtures under src/test/resources remain version-controlled.
+/src/main/resources/trainings/*
+!/src/main/resources/trainings/.gitkeep
+!/src/main/resources/trainings/README.md
+
+# IntelliJ IDEA
+.idea/
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+# Eclipse, Spring Tool Suite, and Buildship
+.apt_generated/
+.classpath
+.factorypath
+.project
+.settings/
+.springBeans
+.sts4-cache/
+.gradle/
+
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+# Visual Studio Code
 .vscode/
+
+# Operating system metadata
+.DS_Store
+Thumbs.db
+
+# Spring Initializr documentation (remove this rule if HELP.md is customized)
+/HELP.md
