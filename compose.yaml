@@ -1,0 +1,98 @@
+services:
+  kafka:
+    image: apache/kafka:4.0.0
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 10s
+    ports:
+      - "9092:9092"
+
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: airun
+      POSTGRES_USER: airun
+      POSTGRES_PASSWORD: airun
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U airun -d airun"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  airun-ingestion:
+    build:
+      context: .
+      args:
+        SERVICE_MODULE: airun-ingestion
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      AIRUN_INGESTION_DIRECTORY: /data/trainings
+      AIRUN_INGESTION_POLL_INTERVAL: 5s
+      AIRUN_RAW_ACTIVITY_TOPIC: airun.activity.raw.v1
+    restart: unless-stopped
+    volumes:
+      - ./trainings:/data/trainings
+
+  airun-activities:
+    build:
+      context: .
+      args:
+        SERVICE_MODULE: airun-activities
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_CONSUMER_GROUP_ID: airun-activities
+      AIRUN_RAW_ACTIVITY_TOPIC: airun.activity.raw.v1
+      AIRUN_ACTIVITY_STORED_TOPIC: airun.activity.stored.v1
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/airun
+      SPRING_DATASOURCE_USERNAME: airun
+      SPRING_DATASOURCE_PASSWORD: airun
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+  airun-logging:
+    build:
+      context: .
+      args:
+        SERVICE_MODULE: airun-logging
+    depends_on:
+      kafka:
+        condition: service_healthy
+      airun-activities:
+        condition: service_started
+    environment:
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      SPRING_KAFKA_CONSUMER_GROUP_ID: airun-logging
+      AIRUN_ACTIVITY_STORED_TOPIC: airun.activity.stored.v1
+      AIRUN_ACTIVITIES_BASE_URL: http://airun-activities:8080
+    restart: unless-stopped
+
+volumes:
+  postgres-data:
