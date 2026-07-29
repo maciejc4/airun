@@ -1,5 +1,6 @@
 # Maven and Java build output
 /target/
+**/target/
 *.class
 
 # Runtime output and JVM crash reports
@@ -12,18 +13,17 @@ replay_pid*
 .env.*
 !.env.example
 !.env.*.example
-/src/main/resources/application-local.properties
-/src/main/resources/application-local.yml
-/src/main/resources/application-local.yaml
-/src/main/resources/application-secrets.properties
-/src/main/resources/application-secrets.yml
-/src/main/resources/application-secrets.yaml
+/*/src/main/resources/application-local.properties
+/*/src/main/resources/application-local.yml
+/*/src/main/resources/application-local.yaml
+/*/src/main/resources/application-secrets.properties
+/*/src/main/resources/application-secrets.yml
+/*/src/main/resources/application-secrets.yaml
 
 # Raw and decoded production training data is personal data.
-# Test fixtures under src/test/resources remain version-controlled.
-/src/main/resources/trainings/*
-!/src/main/resources/trainings/.gitkeep
-!/src/main/resources/trainings/README.md
+/trainings/*
+!/trainings/.gitkeep
+!/trainings/README.md
 
 # IntelliJ IDEA
 .idea/
@@ -53,6 +53,3 @@ replay_pid*
 # Operating system metadata
 .DS_Store
 Thumbs.db
-
-# Spring Initializr documentation (remove this rule if HELP.md is customized)
-/HELP.md
